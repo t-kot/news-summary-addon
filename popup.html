@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>記事要約＆解説アシスタント</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app-header">
+    <div class="header-title-area">
+      <img src="icons/logo_header.png" alt="ロゴ" class="header-logo-img">
+      <span class="header-app-name">ニュースまとめる君</span>
+    </div>
+    <div class="header-actions">
+      <button id="headerClipBtn" class="header-icon-button" title="この記事をクリップ">
+        <!-- SVGはJSで設定 -->
+      </button>
+      <button id="headerViewClipsBtn" class="header-icon-button" title="クリップ一覧">
+        <!-- SVGはJSで設定 -->
+      </button>
+      <button id="headerReloadBtn" class="header-icon-button" title="再読み込み">
+        <!-- SVGはJSで設定 -->
+      </button>
+      <button id="headerSettingsBtn" class="header-icon-button" title="設定">
+        <!-- SVGはJSで設定 -->
+      </button>
+    </div>
+  </div>
+
+  <div id="content">
+    <div id="result"></div>
+  </div>
+
+  <div id="app-footer" style="padding: 10px; text-align: center; border-top: 1px solid #eee;">
+    <a href="#" id="footerCopyPageTextLink" style="color: #007bff; text-decoration: none;">ページ全体のテキストをコピー</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html> 

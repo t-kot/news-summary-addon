@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>クリップした記事一覧</title>
+  <link rel="stylesheet" href="clips.css">
+</head>
+<body>
+  <h1>クリップした記事一覧</h1>
+  <table id="clipsTable">
+    <thead>
+      <tr>
+        <th>タイトル</th>
+        <th>URL</th>
+        <th>クリップ日時</th>
+        <th>アクション</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- クリップされた記事がここに行として追加されます -->
+    </tbody>
+  </table>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <button id="downloadCsvBtn" class="action-button" style="background-color: #007bff; color: white;">全クリップをCSVでダウンロード</button>
+  </div>
+
+  <script src="clips.js"></script>
+</body>
+</html> 

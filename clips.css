@@ -1,0 +1,125 @@
+/* clips.css */
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  background-color: #f4f7f6;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+}
+
+#clipsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#clipsTable th, #clipsTable td {
+  border: 1px solid #ddd;
+  padding: 12px 15px;
+  text-align: left;
+}
+
+#clipsTable th {
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+}
+
+#clipsTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+#clipsTable tr:hover {
+  background-color: #f1f1f1;
+}
+
+.clip-url {
+  max-width: 300px; /* URLが長すぎる場合に省略 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.action-button {
+  padding: 6px 10px;
+  margin-right: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
+}
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+.view-button {
+  background-color: #2ecc71;
+  color: white;
+}
+.view-button:hover {
+  background-color: #27ae60;
+}
+
+/* モーダル表示用のスタイル (任意) */
+.modal {
+  display: none; 
+  position: fixed; 
+  z-index: 1000; 
+  left: 0;
+  top: 0;
+  width: 100%; 
+  height: 100%; 
+  overflow: auto; 
+  background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto; 
+  padding: 25px;
+  border: 1px solid #888;
+  width: 80%; 
+  max-width: 900px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.close-button {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+}
+
+.close-button:hover,
+.close-button:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-body {
+  margin-top: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-body h2 {
+    margin-top: 0;
+} 
