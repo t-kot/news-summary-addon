@@ -45,6 +45,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   currentTabInfo = { url: tab.url, title: tab.title, id: tab.id };
 
+  let siteType = 'general'; // デフォルトは一般サイト
+  let videoUrl = null;
+
+  if (tab.url && tab.url.includes("youtube.com/watch?v=")) {
+    siteType = 'youtube';
+    videoUrl = tab.url; // YouTube動画の場合はvideoUrlも設定
+    console.log("Site type identified as 'youtube':", videoUrl);
+  }
+  // 今後、他の特定サイトの判定をここに追加できる
+  // else if (tab.url && tab.url.includes("some-other-site.com/article/")) {
+  //   siteType = 'someOtherSiteArticle';
+  // }
+
   if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
     showError('この拡張機能は通常のウェブページでのみ動作します。');
     disableHeaderButtonsOnError(true);
@@ -67,9 +80,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     const { pageUrl, pageTitle, pageText } = injectionResults[0].result;
-    currentTabInfo.pageText = pageText;
+    currentTabInfo.pageText = pageText; // pageTextは常に格納しておく (クリップ機能などで使う可能性)
     currentTabInfo.actualPageTitle = pageTitle;
-    requestSummary(pageUrl, pageTitle, pageText, false, tab.id);
+
+    // requestSummaryを呼び出す代わりに、ここで直接runtime.sendMessageのdataオブジェクトを構築
+    let dataForBackground = {
+      pageUrl: pageUrl, // コンテンツスクリプトから取得した正確なURL
+      pageTitle: pageTitle,
+      forceReload: false, // requestSummaryから渡される想定だった値
+      tabId: tab.id,
+      siteType: siteType
+    };
+
+    if (siteType === 'youtube') {
+      dataForBackground.videoUrl = videoUrl; // YouTubeの場合、videoUrlを渡す
+      dataForBackground.pageText = null;    // YouTubeの場合、本文はGeminiに送らない
+    } else {
+      dataForBackground.pageText = pageText; // 一般サイトの場合、取得した本文を渡す
+    }
+    
+    // 元のrequestSummary呼び出し箇所に相当する処理
+    chrome.runtime.sendMessage(
+      { action: "getSummary", data: dataForBackground },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.error("Error sending message to background:", chrome.runtime.lastError.message);
+          showError("バックグラウンド処理との連携に失敗しました。");
+          return;
+        }
+        // pageText を渡す際に、YouTubeの場合は undefined/null になるので、
+        // handleBackgroundResponse がそれを適切に扱えるか確認が必要。
+        // もし handleBackgroundResponse が pageText を期待するなら、
+        // dataForBackground.pageText を渡すか、または null を渡す。
+        // ここでは、dataForBackground に含まれる pageText (YouTubeならnull) をそのまま渡す。
+        handleBackgroundResponse(response, dataForBackground.pageUrl, dataForBackground.pageTitle, dataForBackground.pageText, dataForBackground.tabId);
+      }
+    );
+
+    // requestSummary(pageUrl, pageTitle, pageText, false, tab.id); // この呼び出しは上記sendMessageに置き換え
     // ページ情報取得後はヘッダーボタンを有効化（ローディング中も操作は可能にする）
     disableHeaderButtonsOnError(false);
   });
@@ -256,15 +304,47 @@ function disableHeaderButtonsOnError(disable) {
 }
 
 function requestSummary(pageUrl, pageTitle, pageText, forceReload, tabId) {
+  // この関数内の siteType 判定とデータ構築ロジックはDOMContentLoaded内に移動したため、
+  // ここの呼び出しはDOMContentLoaded内の chrome.runtime.sendMessage に置き換えられています。
+  // この関数自体がまだ他から呼ばれている場合は、そちらの呼び出し元も修正が必要です。
+  // 今回の変更では、DOMContentLoadedからの呼び出しを直接修正したため、
+  // このrequestSummary関数がpopup.js内で唯一の呼び出し元だったと仮定すると、
+  // この関数は実質的に使われなくなります。
+  // ただし、既存の headerReloadButton のイベントリスナー内ではまだ使われています。
+  // そちらも修正が必要です。
+
+  // headerReloadButton から呼び出された場合の siteType 判定
+  let siteType = 'general';
+  let videoUrl = null;
+  if (pageUrl && pageUrl.includes("youtube.com/watch?v=")) {
+    siteType = 'youtube';
+    videoUrl = pageUrl;
+  }
+
+  let dataForBackground = {
+    pageUrl,
+    pageTitle,
+    forceReload,
+    tabId,
+    siteType
+  };
+
+  if (siteType === 'youtube') {
+    dataForBackground.videoUrl = videoUrl;
+    dataForBackground.pageText = null;
+  } else {
+    dataForBackground.pageText = pageText; // 再読み込み時は currentTabInfo.pageText を使う想定
+  }
+
   chrome.runtime.sendMessage(
-    { action: "getSummary", data: { pageUrl, pageTitle, pageText, forceReload, tabId } },
+    { action: "getSummary", data: dataForBackground },
     (response) => {
       if (chrome.runtime.lastError) {
         console.error("Error sending message to background:", chrome.runtime.lastError.message);
         showError("バックグラウンド処理との連携に失敗しました。");
         return;
       }
-      handleBackgroundResponse(response, pageUrl, pageTitle, pageText, tabId);
+      handleBackgroundResponse(response, dataForBackground.pageUrl, dataForBackground.pageTitle, dataForBackground.pageText, dataForBackground.tabId);
     }
   );
 }
