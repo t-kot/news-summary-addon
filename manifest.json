@@ -14,10 +14,7 @@
     "scripting",
     "storage"
   ],
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
+  "host_permissions": [],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
