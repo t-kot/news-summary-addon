@@ -3,12 +3,16 @@
   "name": "記事要約＆解説アシスタント",
   "version": "1.0",
   "description": "ウェブページの主要な情報を抽出し、要約と背景知識の解説を表示します。",
+  "icons": {
+    "16": "icons/icon_default_16.png",
+    "48": "icons/icon_default_48.png",
+    "128": "icons/icon_default_128.png"
+  },
   "options_page": "options.html",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage",
-    "contextMenus"
+    "storage"
   ],
   "host_permissions": [
     "http://*/*",
