@@ -126,66 +126,90 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function generateAndDownloadCsv(clips) {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    const headers = ["タイトル", "URL", "クリップ日時", "要約・解説（テキスト）", "記事本文"]; // ヘッダー名変更
-    csvContent += headers.map(h => `"${escapeCsvField(h)}"`).join(",") + "\r\n";
+    let csvContent = "";
+    const headers = ["title", "url", "summary", "explanation", "clipped_at", "full_content"];
+    csvContent += headers.map(h => escapeAndQuoteCsvField(h)).join(",") + "\r\n";
 
-    const sortedClips = Object.values(clips).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    sortedClips.forEach(clip => {
-      // summaryHtmlからHTMLタグを除去してプレーンテキストにする
+    const clipsArray = Object.values(clips);
+    const sortedClips = clipsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    for (const clip of sortedClips) {
       let summaryText = '';
+      let explanationText = '';
+      
       if (clip.summaryHtml) {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = clip.summaryHtml;
-        // 箇条書きの「・」や改行を保持しつつテキスト化する工夫
-        // (liタグを改行と「・ 」で置き換えるなど、より丁寧な処理も可能だが、今回はinnerTextを基本とする)
-        // 簡単なテキスト化として、ブロック要素の後に改行をイメージ
-        Array.from(tempDiv.querySelectorAll('div.section-card')).forEach(card => {
-            const titleEl = card.querySelector('.section-title');
-            const contentEl = card.querySelector('.section-content');
-            if(titleEl) summaryText += titleEl.innerText.replace(/コピー$/, '').trim() + ":\n"; // ボタンテキスト除去
-            if(contentEl) {
-                if(contentEl.tagName === 'UL'){
-                    Array.from(contentEl.querySelectorAll('li')).forEach(li => {
-                        summaryText += "  ・" + li.innerText + "\n";
-                    });
-                } else {
-                    summaryText += contentEl.innerText + "\n";
-                }
+        
+        const summarySection = tempDiv.querySelector('.section-card:nth-child(2) .section-content');
+        if (summarySection) {
+          summaryText = summarySection.innerText.trim();
+        }
+        
+        const explanationSection = tempDiv.querySelector('.section-card:nth-child(3) .section-content');
+        if (explanationSection) {
+          explanationText = explanationSection.innerText.trim();
+        }
+
+        if (!summaryText || !explanationText) {
+          const sections = tempDiv.querySelectorAll('.section-card');
+          sections.forEach(section => {
+            const titleEl = section.querySelector('.section-title');
+            const contentEl = section.querySelector('.section-content');
+            if (titleEl && contentEl) {
+              const title = titleEl.innerText.replace(/コピー$/, '').trim();
+              if (title.includes('要約') && !summaryText) {
+                summaryText = contentEl.innerText.trim();
+              } else if (title.includes('解説') && !explanationText) {
+                explanationText = contentEl.innerText.trim();
+              }
             }
-            summaryText += "\n"; // セクション間の区切り
-        });
-        summaryText = summaryText.trim();
-        if (!summaryText) { // もし上記でうまく取れなければ、単純なinnerText
-            summaryText = tempDiv.innerText || '';
+          });
         }
       }
 
       const row = [
         clip.title,
         clip.url,
+        summaryText,
+        explanationText,
         new Date(clip.timestamp).toLocaleString('ja-JP'),
-        summaryText, // タグ除去したテキスト
         clip.pageBodyText
       ];
-      csvContent += row.map(field => `"${escapeCsvField(String(field))}"`).join(",") + "\r\n";
-    });
 
-    const encodedUri = encodeURI(csvContent);
+      csvContent += row.map(field => escapeAndQuoteCsvField(field)).join(",") + "\r\n";
+    }
+
+    // Blobを使用してCSVファイルを生成
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    // ダウンロードリンクを作成してクリック
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[-T:]/g, '');
     link.setAttribute("download", `clipped_articles_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // 生成したURLを解放
+    URL.revokeObjectURL(url);
   }
 
-  function escapeCsvField(field) {
+  // RFC 4180準拠のCSVフィールドエスケープ・クォート関数
+  function escapeAndQuoteCsvField(field) {
     if (field === undefined || field === null) return '';
-    let strField = String(field);
-    // " を "" にエスケープし、全体をダブルクォートで囲むことで、カンマや改行を含むフィールドに対応
-    return strField.replace(/"/g, '""');
+    const strField = String(field);
+    // ダブルクォートを2重にエスケープ
+    const escapedField = strField.replace(/"/g, '""');
+    // カンマ、ダブルクォート、改行が含まれる場合は必ずダブルクォートで囲む
+    if (/[",\n\r]/.test(strField)) {
+      return `"${escapedField}"`;
+    } else {
+      return escapedField;
+    }
   }
 
   // 初期表示

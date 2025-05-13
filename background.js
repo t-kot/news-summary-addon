@@ -163,9 +163,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
       }
     }
-    
-    apiRequestStatus[cacheKey] = 'loading';
-    updateIconForTab(tabId, pageUrl);
+
+        apiRequestStatus[cacheKey] = 'loading';
+        updateIconForTab(tabId, pageUrl); 
     // 初回リクエスト（キャッシュなし、リロードフラグなし）の場合のみ、ここでローディングを返す
     if (!forceReload && !apiResultsCache[cacheKey]) {
         sendResponse({ status: 'loading' });
@@ -353,7 +353,7 @@ async function fetchSummaryFromGemini(pageUrl, pageTitle, pageText, cacheKey, si
         console.warn("APIから有効なテキスト応答がありませんでした。レスポンスデータ:", JSON.stringify(data, null, 2));
         throw new Error("APIから期待される形式のテキスト応答がありませんでした。");
     }
-    
+
     let summaryTitlePrefix = siteType === 'youtube' ? "動画" : "記事";
     const displayTitle = pageTitle || (siteType === 'youtube' && videoUrl ? videoUrl : pageUrl);
     
@@ -367,41 +367,41 @@ async function fetchSummaryFromGemini(pageUrl, pageTitle, pageText, cacheKey, si
                 </div>`;
     } else {
         // 一般記事の場合は既存のHTML整形ロジックを使用
-        const titleMatch = text.match(/翻訳タイトル[:：]([\s\S]*?)---/s);
-        const detailedSummaryMatch = text.match(/詳細要約[:：]([\s\S]*?)---/s);
-        const backgroundKnowledgeMatch = text.match(/背景知識と前提の解説[:：]([\s\S]*)/s);
+    const titleMatch = text.match(/翻訳タイトル[:：]([\s\S]*?)---/s);
+    const detailedSummaryMatch = text.match(/詳細要約[:：]([\s\S]*?)---/s);
+    const backgroundKnowledgeMatch = text.match(/背景知識と前提の解説[:：]([\s\S]*)/s);
 
-        const titleText = titleMatch ? titleMatch[1].trim() : '';
+    const titleText = titleMatch ? titleMatch[1].trim() : '';
         const detailedSummaryText = detailedSummaryMatch ? detailedSummaryMatch[1].trim().replace(/\n/g, '<br>') : '';
-        const backgroundKnowledgeHtml = backgroundKnowledgeMatch ? backgroundKnowledgeMatch[1].trim().split(/^・/m).filter(s => s.trim() !== '').map(item => {
-            const parts = item.trim().match(/^【(.*?)】[:：](.*)/s);
-            if (parts && parts.length === 3) {
-                return `<li style="margin-bottom: 0.8em;"><strong>【${parts[1].trim()}】:</strong><br>${parts[2].trim().replace(/\n/g, '<br>')}</li>`;
-            } else {
+    const backgroundKnowledgeHtml = backgroundKnowledgeMatch ? backgroundKnowledgeMatch[1].trim().split(/^・/m).filter(s => s.trim() !== '').map(item => {
+        const parts = item.trim().match(/^【(.*?)】[:：](.*)/s);
+        if (parts && parts.length === 3) {
+            return `<li style="margin-bottom: 0.8em;"><strong>【${parts[1].trim()}】:</strong><br>${parts[2].trim().replace(/\n/g, '<br>')}</li>`;
+        } else {
                 return `<li style="margin-bottom: 0.8em;">${item.trim().replace(/\n/g, '<br>')}</li>`;
-            }
-        }).join('') : '';
+        }
+    }).join('') : '';
 
-        if (titleText) {
-          html += `<div class='section-card'>
+    if (titleText) {
+      html += `<div class='section-card'>
                       <div class='section-title'>日本語タイトル <button class='copy-button' data-clipboard-target='#copy-title-text-${Date.now()}'>コピー</button></div>
                       <div class='section-content' id='copy-title-text-${Date.now()}'>${titleText}</div>
-                    </div>`;
-        }
-        if (detailedSummaryText) {
-          html += `<div class='section-card'>
+                </div>`;
+    }
+    if (detailedSummaryText) {
+      html += `<div class='section-card'>
                       <div class='section-title'>詳細要約 <button class='copy-button' data-clipboard-target='#copy-summary-text-${Date.now()}'>コピー</button></div>
                       <div class='section-content' id='copy-summary-text-${Date.now()}'>${detailedSummaryText}</div>
-                    </div>`;
-        }
-        if (backgroundKnowledgeHtml) {
-          html += `<div class='section-card'>
+                </div>`;
+    }
+    if (backgroundKnowledgeHtml) {
+      html += `<div class='section-card'>
                       <div class='section-title'>背景知識と前提の解説 <button class='copy-button' data-clipboard-target='#copy-background-text-${Date.now()}'>コピー</button></div>
                       <ul class='section-content' id='copy-background-text-${Date.now()}' style='list-style: none; padding-left: 0;'>${backgroundKnowledgeHtml}</ul>
-                    </div>`;
-        }
+                </div>`;
+    }
         // 一般記事で、もし上記の構造化された情報が取れなかった場合のフォールバック
-        if (!html && text) {
+    if (!html && text) {
             html = `<div class='section-card'><div class='section-title'>${summaryTitlePrefix}の要約 (${displayTitle}) <button class='copy-button' data-clipboard-target='#copy-summary-text'>コピー</button></div><div class='section-content' id='copy-summary-text'>${text.replace(/\n/g, '<br>')}</div></div>`;
             console.warn("一般記事のAPI応答から構造化された情報を抽出できませんでした。生のテキストを表示します。");
         }
